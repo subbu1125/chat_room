@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	<script type='text/javascript' src='./jquery.min.js'></script>
+	<script type='text/javascript' src='./socket.io/socket.io.js'></script>
+	<script type="text/javascript">
+
+	$(document).ready(function(){
+
+	var socket = io.connect();
+	var current_user;
+
+	console.log('Connection started!');
+
+	function new_user(){
+		var user = prompt('Please create a unqiue username for this chatroom!');
+		socket.emit('new:user', {user: user});
+	};
+
+	new_user();
+
+	socket.on('fail', function(data){
+		$('#errors').html(data.error);
+		new_user();
+	});
+
+	socket.on('success', function(data){
+		$('#errors').html('');
+		current_user = data.user;
+
+		var messages = data.messages
+		var messages_string = '';
+		console.log(messages);
+
+		for(var i = 0; i < messages.length; i++){
+			messages_string += '<p>' + messages[i].user + ': ' + messages[i].message + '</p>'
+		};
+
+		$('#chatbox').append(messages_string);
+
+	});
+
+	socket.on('reply:message', function(data){
+		$('#chatbox').append('<p>' + data.user + ': ' + data.message + '</p>');
+	});
+
+
+	$('#input').submit(function(){
+		console.log($('#message').val());
+		socket.emit('new:message', {user: current_user, message: $('#message').val() });
+		return false;
+	});
+
+
+
+
+
+	})
+
+	</script>
+</head>
+<body>
+	<h1>Chat Room</h1>
+	<div id='errors'></div>
+	<div id='chatbox'></div>
+	<form id='input'>
+		<input type='text' id='message' name='message'>
+		<input type='submit' id='submit' value='Say something!'>
+	</form>
+</body>
+</html>
